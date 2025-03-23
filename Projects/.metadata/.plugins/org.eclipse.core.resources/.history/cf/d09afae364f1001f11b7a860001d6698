@@ -1,0 +1,49 @@
+package businessLogic;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+
+public abstract class TextAnalyzer {
+    protected String text;
+
+    public TextAnalyzer(String text) {
+        this.text = text;
+    }
+
+    protected String runPythonScript(String scriptPath, String input, String mode) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("python", scriptPath, input, mode);
+            Process process = pb.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            StringBuilder errorOutput = new StringBuilder();
+            while ((line = errorReader.readLine()) != null) {
+                errorOutput.append(line).append("\n");
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                System.out.println("⚠ Error al ejecutar Python: " + errorOutput);
+                return "Error en el script de Python.";
+            }
+
+            return output.toString().trim();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return "Error al ejecutar el script de Python.";
+        }
+    }
+
+
+    public abstract void analyze() throws IOException;
+}
+

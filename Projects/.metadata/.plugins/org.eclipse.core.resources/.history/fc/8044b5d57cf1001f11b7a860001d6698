@@ -1,0 +1,62 @@
+package businessLogic;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import data.EmotionsClassifier;
+import data.PositiveNegativeClassifier;
+
+public class AnalysisService {
+    private String text;
+    private String mode;
+    private List<TextAnalyzer> classifiers;
+
+    public AnalysisService(String text, String mode) {
+        this.text = text;
+        this.mode = mode;
+        this.classifiers = new ArrayList<>();
+        classifiers.add(new PositiveNegativeClassifier(text));
+        classifiers.add(new EmotionsClassifier(text));
+    }
+
+    public Map<String, Double> analyze() {
+        Map<String, Double> aggregatedResults = new HashMap<>();
+        int lineCount = 1;
+        
+        if (mode.equals("file")) {
+            lineCount = countLines(text);
+        }
+
+        for (TextAnalyzer classifier : classifiers) {
+            try {
+                classifier.analyze();
+                classifier.getValues().forEach(result -> {
+                    aggregatedResults.put(result.getName(),
+                            aggregatedResults.getOrDefault(result.getName(), 0.0) + result.getValue());
+                });
+            } catch (IOException e) {
+                System.out.println("Error en el análisis: " + e.getMessage());
+            }
+        }
+        
+        // Promediar si es archivo
+        if (mode.equals("file")) {
+        	final int totalLines = lineCount; // Hacer una copia final antes del replaceAll
+        	aggregatedResults.replaceAll((k, v) -> v / totalLines);
+        }
+        
+        return aggregatedResults;
+    }
+
+    private int countLines(String filePath) {
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(filePath))) {
+            return (int) reader.lines().count();
+        } catch (IOException e) {
+            System.out.println("No se pudo contar las líneas del archivo: " + e.getMessage());
+            return 1;
+        }
+    }
+}

@@ -1,0 +1,27 @@
+package ui;
+
+import java.io.IOException;
+
+import data.EmotionsClassifier;
+import data.PositiveNegativeClassifier;
+
+public class Project {
+    public static void main(String[] args) {
+        String text = "Hola amigo, te odio";
+        String mode = "-";
+        PositiveNegativeClassifier p = new PositiveNegativeClassifier(text); 
+        p.prediction(mode);
+        
+        try {
+            p.analyze();
+        } catch (IOException e) {
+            System.out.println("Error al analizar el archivo: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        p.getValues();
+        //EmotionsClassifier e = new EmotionsClassifier(text);
+        //System.out.println(p.prediction());
+        //System.out.println(e.predictEmotion());
+    }
+}

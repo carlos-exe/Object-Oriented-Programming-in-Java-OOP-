@@ -1,0 +1,217 @@
+package ui;
+
+import javafx.animation.PauseTransition;
+import javafx.scene.image.Image;
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.chart.*;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import javafx.util.Duration;
+import businessLogic.AnalysisService;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Map;
+
+public class MainFX extends Application {
+
+    private TextArea inputArea;
+    private PieChart pieChart;
+    private BarChart<String, Number> barChart;
+    private TableView<Map.Entry<String, Integer>> table;
+    private VBox resultContainer;
+    private RadioButton tableOption, chartOption, barChartOption;
+    private ToggleGroup resultToggleGroup;
+    private String analysisMode = "text"; // "text" o "file"
+
+    @Override
+    public void start(@SuppressWarnings("exports") Stage primaryStage) {
+        primaryStage.setTitle("FeeLens 🔍 - Análisis de Sentimientos");
+        String path = Paths.get("assets/FeeLensIconErased.png").toUri().toString();
+        Image logo = new Image(path);
+        primaryStage.getIcons().add(logo); // Agregar el ícono a la ventana
+
+        // Menú lateral
+        VBox menu = createMenu(primaryStage);
+
+        // Contenedor principal
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new Insets(20));
+        mainContainer.setAlignment(Pos.TOP_CENTER);
+        mainContainer.getStyleClass().add("main-container");
+
+        // Etiqueta de entrada
+        Label inputLabel = new Label("Ingrese texto o seleccione un archivo:");
+        inputLabel.getStyleClass().add("title-label");
+
+        // Área de entrada
+        inputArea = new TextArea();
+        inputArea.setPromptText("Escriba el texto aquí o seleccione un archivo...");
+        inputArea.getStyleClass().add("text-area-custom");
+
+        // Botón de análisis
+        Button analyzeButton = new Button("📊 Analizar");
+        analyzeButton.getStyleClass().add("custom-button");
+        analyzeButton.setOnAction(_ -> analyze());
+
+        HBox buttonBox = new HBox(15, analyzeButton);
+        buttonBox.setAlignment(Pos.CENTER);
+
+        // Opciones de visualización mejoradas
+        Label viewLabel = new Label("Seleccione cómo visualizar los resultados:");
+        viewLabel.getStyleClass().add("subtitle-label");
+
+        tableOption = new RadioButton("📋 Tabla");
+        chartOption = new RadioButton("📊 Gráfico de Torta");
+        barChartOption = new RadioButton("📈 Gráfico de Barras");
+        
+        resultToggleGroup = new ToggleGroup();
+        tableOption.setToggleGroup(resultToggleGroup);
+        chartOption.setToggleGroup(resultToggleGroup);
+        barChartOption.setToggleGroup(resultToggleGroup);
+
+        HBox toggleBox = new HBox(15, tableOption, chartOption, barChartOption);
+        toggleBox.setAlignment(Pos.CENTER);
+
+        // Contenedor de resultados
+        resultContainer = new VBox();
+        resultContainer.setAlignment(Pos.CENTER);
+        resultContainer.setPadding(new Insets(20));
+
+        mainContainer.getChildren().addAll(inputLabel, inputArea, buttonBox, viewLabel, toggleBox, resultContainer);
+
+        // Contenedor raíz con menú y contenido
+        HBox root = new HBox(menu, mainContainer);
+
+        Scene scene = new Scene(root, 950, 600);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private VBox createMenu(Stage stage) {
+        VBox menu = new VBox(20);
+        menu.setPadding(new Insets(20));
+        menu.setAlignment(Pos.TOP_CENTER);
+        menu.getStyleClass().add("menu");
+
+        Label title = new Label("📊 FeeLens");
+        title.getStyleClass().add("menu-title");
+
+        Button settingsButton = new Button("⚙️ Configuración");
+        settingsButton.getStyleClass().add("menu-button");
+        settingsButton.setOnAction(_ -> openSettingsDialog());
+
+        Button exitButton = new Button("❌ Salir");
+        exitButton.getStyleClass().add("menu-button");
+        exitButton.setOnAction(_ -> stage.close());
+
+        menu.getChildren().addAll(title, settingsButton, exitButton);
+        return menu;
+    }
+
+    private void openSettingsDialog() {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Configuración");
+        dialog.setHeaderText("Seleccione el tipo de análisis");
+
+        ButtonType applyButton = new ButtonType("Aplicar", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(applyButton, ButtonType.CANCEL);
+
+        ToggleGroup modeGroup = new ToggleGroup();
+        RadioButton textOption = new RadioButton("📄 Analizar texto ingresado");
+        RadioButton fileOption = new RadioButton("📁 Analizar un archivo");
+
+        textOption.setToggleGroup(modeGroup);
+        fileOption.setToggleGroup(modeGroup);
+        textOption.setSelected(analysisMode.equals("text"));
+
+        VBox content = new VBox(10, textOption, fileOption);
+        content.setAlignment(Pos.CENTER);
+        dialog.getDialogPane().setContent(content);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == applyButton) {
+                analysisMode = textOption.isSelected() ? "text" : "file";
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+    private void analyze() {
+        AnalysisService service;
+        if (analysisMode.equals("text")) {
+            String input = inputArea.getText();
+            if (input.isEmpty()) return;
+            service = new AnalysisService(input, "text");
+        } else {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Seleccionar Archivo de Texto");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de Texto", "*.txt"));
+            File selectedFile = fileChooser.showOpenDialog(null);
+
+            if (selectedFile == null) return;
+            inputArea.setText(selectedFile.getAbsolutePath());
+            service = new AnalysisService(selectedFile.getAbsolutePath(), "file");
+        }
+
+        try {
+            service.analyze();
+            showResults(service);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+	private void showResults(AnalysisService service) {
+        resultContainer.getChildren().clear();
+
+        if (tableOption.isSelected()) {
+            table = new TableView<>();
+            table.setPrefSize(400, 300);
+
+            TableColumn<Map.Entry<String, Integer>, String> emotionColumn = new TableColumn<>("Emoción");
+            emotionColumn.setCellValueFactory(data -> 
+                new javafx.beans.property.SimpleStringProperty(data.getValue().getKey()));
+
+            TableColumn<Map.Entry<String, Integer>, Integer> valueColumn = new TableColumn<>("Porcentaje");
+            valueColumn.setCellValueFactory(data -> 
+                new javafx.beans.property.SimpleIntegerProperty(data.getValue().getValue()).asObject());
+
+            table.getColumns().addAll(emotionColumn, valueColumn);
+            table.getItems().setAll(service.getEmotionResults().entrySet());
+
+            resultContainer.getChildren().add(table);
+            
+        } else if (chartOption.isSelected()) {
+            pieChart = new PieChart();
+            service.getEmotionResults().forEach((key, value) -> 
+                pieChart.getData().add(new PieChart.Data(key, value))
+            );
+            resultContainer.getChildren().add(pieChart);
+        } else if (barChartOption.isSelected()) {
+            CategoryAxis xAxis = new CategoryAxis();
+            NumberAxis yAxis = new NumberAxis();
+            barChart = new BarChart<>(xAxis, yAxis);
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            service.getEmotionResults().forEach((key, value) -> 
+                series.getData().add(new XYChart.Data<>(key, value))
+            );
+            barChart.getData().add(series);
+            resultContainer.getChildren().add(barChart);
+        }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}

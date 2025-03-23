@@ -1,0 +1,66 @@
+package ui;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.Scanner;
+import businessLogic.AnalysisService;
+
+public class Project {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String mode = "";
+        String inputText = "";
+
+        // Preguntar si el usuario quiere ingresar texto o archivo
+        System.out.println("Ingrese 'Texto' o 'Archivo':");
+        String choice = scanner.nextLine().trim().toLowerCase();
+
+        if (choice.equals("texto")) {
+            mode = "text";
+            System.out.println("Ingrese el texto:");
+            inputText = scanner.nextLine();
+        } else if (choice.equals("archivo")) {
+            mode = "file";
+            System.out.println("Ingrese la ruta del archivo:");
+            inputText = scanner.nextLine();
+        } else {
+            System.out.println("Opción inválida. Saliendo...");
+            scanner.close();
+            return;
+        }
+
+        // Crear el servicio de análisis y ejecutar la clasificación
+        AnalysisService service = new AnalysisService(inputText, mode);
+        try {
+            service.analyze();
+        } catch (IOException e) {
+            System.out.println("Error al analizar: " + e.getMessage());
+            e.printStackTrace();
+            scanner.close();
+            return;
+        }
+
+        // Mostrar resultados
+        System.out.println("\n========== Resultados ==========");
+        System.out.println("Entrada: " + inputText);
+
+        // Imprimir resultados de Positivo/Negativo
+        System.out.println("\n📊 Sentimiento Positivo/Negativo:");
+        service.getPositiveNegativeResults().forEach((label, value) -> 
+            System.out.println(label + ": " + value));
+
+        // Imprimir resultados de emociones
+        if (mode.equals("text")) {
+            System.out.println("\n😊 Clasificación de Emociones:");
+            service.getEmotionResults().forEach((label, value) -> 
+                System.out.println(label + ": " + value));
+        } else if (mode.equals("file")) {
+            System.out.println("\n📈 Promedio de emociones en el archivo:");
+            for (Map.Entry<String, Double> entry : service.getAggregatedEmotionResults().entrySet()) {
+                System.out.println(entry.getKey() + ": " + entry.getValue());
+            }
+        }
+
+        scanner.close();
+    }
+}

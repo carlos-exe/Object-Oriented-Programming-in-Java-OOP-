@@ -1,0 +1,39 @@
+package data;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import com.google.gson.*;
+
+import businessLogic.TextAnalyzer;
+
+
+public class PositiveNegativeClassifier extends TextAnalyzer{
+	private ArrayList<String> values; 
+	private String scriptPath = "resources/PositivesAndNegatives.py";
+	
+	public PositiveNegativeClassifier(String text) {
+		super(text);
+	}
+	
+	public void prediction() {
+		String jsonOut = runPythonScript(scriptPath,text); 
+		
+		Gson gson = new Gson();
+		
+		Map<String, Integer> emotions = gson.fromJson(jsonOut, Map.class);
+		
+		System.out.println(emotions);
+		
+	}
+	
+	public ArrayList<String> analyze(){
+		
+	}
+
+}

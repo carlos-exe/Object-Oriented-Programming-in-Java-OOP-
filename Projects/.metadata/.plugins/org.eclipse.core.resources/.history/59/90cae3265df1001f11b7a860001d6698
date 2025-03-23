@@ -1,0 +1,56 @@
+package data;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+
+import businessLogic.TextAnalyzer;
+
+public class EmotionsClassifier extends TextAnalyzer{
+	
+    public EmotionsClassifier(String text) {
+        super(text);
+    }
+
+    public String predictEmotion() {
+        try {
+            // Ruta del script de Python
+            String pythonScriptPath = "resources/emotions.py";
+
+            // Construcción del proceso
+            ProcessBuilder pb = new ProcessBuilder("py", "-3.12", pythonScriptPath, text);
+            Process process = pb.start();
+
+            // Leer la salida estándar del script de Python
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line);
+            }
+
+            // Leer la salida de error del script de Python (si hay algún problema)
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            StringBuilder errorOutput = new StringBuilder();
+            while ((line = errorReader.readLine()) != null) {
+                errorOutput.append(line);
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                return output.toString(); // Devuelve la salida JSON de las emociones
+            } else {
+                return "Error en el script de Python: " + errorOutput.toString();
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return "Error al ejecutar el script de Python.";
+        }
+    }
+    
+    public void analyze(){
+		ArrayList<String> a = new ArrayList<String>();
+		a.add("jaja");
+    }
+}

@@ -1,0 +1,53 @@
+package data;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+
+import businessLogic.TextAnalyzer;
+
+
+public class PositiveNegativeClassifier extends TextAnalyzer{
+	private ArrayList<Classification> values; 
+	private String resumeFile = "resources/PNResume.txt";
+	private String scriptPath = "resources/PositivesAndNegatives.py";
+	
+	public PositiveNegativeClassifier(String text) {
+		super(text);
+	}
+	
+	public void prediction(String mode) {
+		runPythonScript(scriptPath,text,mode);		
+	}
+	
+	public void analyze() throws IOException{		
+		InputStream input = PositiveNegativeClassifier.class.getClassLoader().getResourceAsStream(this.resumeFile);
+
+        if (input == null) {
+            throw new FileNotFoundException("No se encontró el archivo: " + this.resumeFile);
+        }
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(input));
+        String line;
+
+        while ((line = br.readLine()) != null) {
+            String[] parts = line.split(", ");
+            String pos = parts[0];
+            String neg = parts[3];
+            Integer value_pos = Integer.parseInt(parts[1]);
+            Integer value_neg = Integer.parseInt(parts[4]);
+            
+            this.values.add(new Classification(pos,value_pos));
+            this.values.add(new Classification(neg,value_neg));
+        }
+        br.close();
+	}
+	
+	public void getValues() {
+		this.values.forEach(System.out::println);
+	}
+
+}

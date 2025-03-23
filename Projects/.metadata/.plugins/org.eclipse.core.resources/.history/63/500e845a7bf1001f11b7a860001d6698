@@ -1,0 +1,37 @@
+package businessLogic;
+
+import java.util.ArrayList;
+
+import data.EmotionsClassifier;
+import data.PositiveNegativeClassifier;
+
+public class AnalysisService {
+	private String text;
+	private String mode;
+	
+	public AnalysisService(String text, String mode) {
+		this.text = text;
+		this.mode = mode;
+	}
+	
+	public ArrayList<TextAnalyzer> classification(){
+		ArrayList<TextAnalyzer> classifiers = new ArrayList<>();
+		if(mode == "file") {
+			
+		}
+		classifiers.add(new PositiveNegativeClassifier(text));
+		classifiers.add(new EmotionsClassifier(text));
+		return classifiers;
+	}
+	
+	public ArrayList<String> getValues(String mode) {
+		ArrayList<String> list = new ArrayList<>();
+		if(mode == "file") {
+			
+		}
+		
+		for(TextAnalyzer classifier: classifiers) {
+			
+		}
+	}
+}

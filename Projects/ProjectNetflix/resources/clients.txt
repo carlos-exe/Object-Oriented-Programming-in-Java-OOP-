@@ -1,0 +1,8 @@
+C7, freeTrial, 11
+C5, basic, 0, 2
+C1, premium, 1, 12
+C2, premium, 0, 24
+C3, standard, 0, 6
+C4, basic, 0, 48
+C6, standard, 0, 2
+C8, freeTrial, 0
