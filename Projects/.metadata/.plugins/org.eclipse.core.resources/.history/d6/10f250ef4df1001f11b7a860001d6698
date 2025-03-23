@@ -1,0 +1,52 @@
+package data;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import com.google.gson.*;
+
+
+public class PositiveNegativeClassifier extends TextAnalyzer{
+	private ArrayList<String> values; 
+	private String scriptPath = "resources/PositivesAndNegatives.py";
+	
+	public PositiveNegativeClassifier(String text) {
+		super(text);
+	}
+	
+	public ArrayList<String> prediction() {
+		String jsonOut = runPythonScript(scriptPath,text); 
+		JSONObject out = new JSONObject(jsonOut);
+	}
+	
+	public ArrayList<String> analyze(){
+		
+	}
+	
+	public static Map<String, Double> parseJson(String jsonString) {
+        Map<String, Double> result = new HashMap<>();
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(jsonString);
+
+            Iterator<Map.Entry<String, JsonNode>> fields = rootNode.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                String key = entry.getKey();  // Nombre de la emoción
+                double value = entry.getValue().asDouble();  // Porcentaje
+
+                result.put(key, value);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+}

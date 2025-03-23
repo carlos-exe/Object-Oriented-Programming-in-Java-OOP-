@@ -1,0 +1,84 @@
+package businessLogic;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import data.PositiveNegativeClassifier;
+import data.EmotionsClassifier;
+
+public class AnalysisService {
+    private String input;
+    private String mode;
+    private Map<String, Double> positiveNegativeResults;
+    private Map<String, Double> emotionResults;
+    private Map<String, Double> aggregatedEmotionResults;
+
+    public AnalysisService(String input, String mode) {
+        this.input = input;
+        this.mode = mode;
+        this.positiveNegativeResults = new HashMap<>();
+        this.emotionResults = new HashMap<>();
+        this.aggregatedEmotionResults = new HashMap<>();
+    }
+
+    public void analyze() throws IOException {
+        if (mode.equals("text")) {
+            analyzeText(input);
+        } else if (mode.equals("file")) {
+            analyzeFile(input);
+        }
+    }
+
+    private void analyzeText(String text) {
+        // Clasificación Positivo/Negativo
+        PositiveNegativeClassifier pnClassifier = new PositiveNegativeClassifier();
+        positiveNegativeResults = pnClassifier.classify(text);
+
+        // Clasificación de Emociones
+        EmotionsClassifier emotionsClassifier = new EmotionsClassifier();
+        emotionResults = emotionsClassifier.classify(text);
+    }
+
+    private void analyzeFile(String filePath) throws IOException {
+        List<String> lines = Files.readAllLines(Paths.get(filePath));
+
+        // Contadores para promediar las emociones
+        int lineCount = lines.size();
+        Map<String, Double> emotionSum = new HashMap<>();
+
+        PositiveNegativeClassifier pnClassifier = new PositiveNegativeClassifier();
+        EmotionsClassifier emotionsClassifier = new EmotionsClassifier();
+
+        for (String line : lines) {
+            // Clasificar Positivo/Negativo (última línea reemplaza el resultado anterior)
+            positiveNegativeResults = pnClassifier.classify(line);
+
+            // Clasificar emociones y acumular para promediar
+            Map<String, Double> emotions = emotionsClassifier.classify(line);
+            for (Map.Entry<String, Double> entry : emotions.entrySet()) {
+                emotionSum.put(entry.getKey(), emotionSum.getOrDefault(entry.getKey(), 0.0) + entry.getValue());
+            }
+        }
+
+        // Calcular promedio de emociones
+        for (Map.Entry<String, Double> entry : emotionSum.entrySet()) {
+            aggregatedEmotionResults.put(entry.getKey(), entry.getValue() / lineCount);
+        }
+    }
+
+    public Map<String, Double> getPositiveNegativeResults() {
+        return positiveNegativeResults;
+    }
+
+    public Map<String, Double> getEmotionResults() {
+        return emotionResults;
+    }
+
+    public Map<String, Double> getAggregatedEmotionResults() {
+        return aggregatedEmotionResults;
+    }
+}

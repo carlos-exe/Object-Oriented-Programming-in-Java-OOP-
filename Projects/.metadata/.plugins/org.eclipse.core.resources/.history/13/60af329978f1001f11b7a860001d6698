@@ -1,0 +1,53 @@
+package ui;
+
+import java.io.IOException;
+import java.util.Scanner;
+
+import data.EmotionsClassifier;
+import data.PositiveNegativeClassifier;
+
+public class Project {
+    public static void main(String[] args) {
+        String text = "-";
+        String mode = "-";
+
+    	System.out.println("Texto o archivo?");
+    	Scanner s = new Scanner(System.in);
+    	
+    	
+    	switch(s.nextLine()) {
+    		case "Texto":
+    			mode = "";
+    			System.out.println("Ingrese el texto:");
+    	    	Scanner textScanner = new Scanner(System.in);
+    	    	text = textScanner.next();
+    		case "Archivo":
+    			mode = "file";
+    			System.out.println("Ingrese el texto:");
+    	    	Scanner fileScanner = new Scanner(System.in);
+    	    	text = fileScanner.next();
+    		default:
+    			System.out.println("Ingrese opción válida");
+    			System.out.println("Saliendo...");
+    			break;
+    	}
+    	
+        PositiveNegativeClassifier p = new PositiveNegativeClassifier(text); 
+        EmotionsClassifier emo = new EmotionsClassifier(text);
+        emo.prediction(mode);
+        p.prediction(mode);
+        
+        try {
+            emo.analyze();
+            p.analyze();
+        } catch (IOException e) {
+            System.out.println("Error al analizar el archivo: " + e.getMessage());
+            e.printStackTrace();
+        }
+        System.out.println("Text: " + text);
+        System.out.println("Results:");
+        System.out.println("---------------------");
+        p.getValues();
+        emo.getValues();
+    }
+}

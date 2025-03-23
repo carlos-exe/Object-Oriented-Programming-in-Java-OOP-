@@ -1,0 +1,108 @@
+package businessLogic;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import data.PositiveNegativeClassifier;
+import data.EmotionsClassifier;
+import data.Classification;
+
+public class AnalysisService {
+    private String input;
+    private String mode;
+    private Map<String, Integer> positiveNegativeResults;
+    private Map<String, Integer> emotionResults;
+    private Map<String, Double> aggregatedEmotionResults;
+
+    public AnalysisService(String input, String mode) {
+        this.input = input;
+        this.mode = mode;
+        this.positiveNegativeResults = new HashMap<>();
+        this.emotionResults = new HashMap<>();
+        this.aggregatedEmotionResults = new HashMap<>();
+    }
+
+    public void analyze() throws IOException {
+        if (mode.equals("text")) {
+            analyzeText(input);
+        } else if (mode.equals("file")) {
+            analyzeFile(input);
+        }
+    }
+
+    private void analyzeText(String text) throws IOException {
+        // Clasificación Positivo/Negativo
+        PositiveNegativeClassifier pnClassifier = new PositiveNegativeClassifier(text);
+        pnClassifier.prediction("single");
+        pnClassifier.analyze();
+        extractPositiveNegativeResults(pnClassifier.getValues());
+
+        // Clasificación de Emociones
+        EmotionsClassifier emotionsClassifier = new EmotionsClassifier(text);
+        emotionsClassifier.prediction("single");
+        emotionsClassifier.analyze();
+        extractEmotionResults(emotionsClassifier.getValues());
+    }
+
+    private void analyzeFile(String filePath) throws IOException {
+
+        // Mapas para almacenar los valores acumulados
+        Map<String, Integer> emotionSum = new HashMap<>();
+        Map<String, Integer> emotionCount = new HashMap<>();
+        
+        // Positivo/Negativo con modo "file"
+        PositiveNegativeClassifier pnClassifier = new PositiveNegativeClassifier(filePath);
+        pnClassifier.prediction("file");
+        pnClassifier.analyze();
+        extractPositiveNegativeResults(pnClassifier.getValues());
+
+        // Emociones: leer línea por línea y calcular promedio
+        EmotionsClassifier emotionsClassifier = new EmotionsClassifier(filePath);
+        emotionsClassifier.prediction("file");
+        emotionsClassifier.analyze();
+        
+        // Sumar valores para cada emoción y contar cuántas veces aparece
+        for (Classification entry : emotionsClassifier.getValues()) {
+            String emotion = entry.getName();
+            int value = entry.getValue();
+            
+            emotionSum.put(emotion, emotionSum.getOrDefault(emotion, 0) + value);
+            emotionCount.put(emotion, emotionCount.getOrDefault(emotion, 0) + 1);
+        }
+
+        // Calcular el promedio por emoción
+        for (Map.Entry<String, Integer> entry : emotionSum.entrySet()) {
+            String emotion = entry.getKey();
+            double average = entry.getValue() / (double) emotionCount.get(emotion);
+            aggregatedEmotionResults.put(emotion, average);
+        }
+    }
+
+    private void extractPositiveNegativeResults(List<Classification> values) {
+        for (Classification classification : values) {
+            positiveNegativeResults.put(classification.getName(), classification.getValue());
+        }
+    }
+
+    private void extractEmotionResults(List<Classification> values) {
+        for (Classification classification : values) {
+            emotionResults.put(classification.getName(), classification.getValue());
+        }
+    }
+
+    public Map<String, Integer> getPositiveNegativeResults() {
+        return positiveNegativeResults;
+    }
+
+    public Map<String, Integer> getEmotionResults() {
+        return emotionResults;
+    }
+
+    public Map<String, Double> getAggregatedEmotionResults() {
+        return aggregatedEmotionResults;
+    }
+}
