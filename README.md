@@ -8,15 +8,16 @@ This repository contains all my projects related to **Object-Oriented Programmin
 
 ```
 📦 Object-Oriented-Programming-in-Java-OOP
-├── 📁 ProjectsAndNotes
+├── 📁 Projects
 │   ├── 📁 Projects
 │   │   ├── Project1
 │   │   ├── Project2
 │   │   ├── ...
-│   ├── 📁 Notes
-│   │   ├── OOP_Concepts.md
-│   │   ├── Design_Patterns.md
-│   │   ├── ...
+├── 📁 BooksAndNotes
+│   ├── 📁 Libros
+│   │   ├── HeadFirstJava_compressed.pdf
+│   ├── Notas_Clase.ipynb
+│   ├── Taller8p5.pdf
 ├── README.md
 ```
 
@@ -40,7 +41,7 @@ This folder includes structured notes covering important OOP topics, such as:
 ## 🔧 Requirements
 To run the projects in this repository, make sure you have:
 - **Java JDK (11 or later)**
-- **An IDE (Eclipse, IntelliJ IDEA, or VS Code with Java extensions)**
+- **An IDE (Eclipse, IntelliJ IDEA, or VS Code with Java extensions), I personally recommed Eclipse**
 - **Git for version control**
 
 ## 🚀 Getting Started
